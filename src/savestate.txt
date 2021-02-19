@@ -1,10 +1,15 @@
 'use strict';
 
-module.exports = createGLStateStack;
+import uniq from 'uniq';
+import { range } from './utils/range';
 
-var uniq = require('uniq');
+interface GlStack {
+  curTex?: number;
+  texState?: Array<[number, number]>;
+  restoreActive: boolean;
+}
 
-function createGLStateStack(gl, variables) {
+function createGLStateStack(gl: WebGLRenderingContext, variables?: number[]) {
   //By default SAVE EVERYTHING
   if (!variables) {
     variables = [
@@ -75,27 +80,31 @@ function createGLStateStack(gl, variables) {
   var popBody = ['proto.pop=function(){var gl=this.gl;'];
 
   //Compute a collection of state variables
-  var nvariables = variables.slice();
+  const nvariables = variables.slice();
   nvariables.sort(function (a, b) {
     return a - b;
   });
-  uniq(nvariables, undefined, true);
+  uniq(nvariables);
+
+  const glStateStack = [];
 
   //Check if texture state needs to be saved
-  var textureTypes = [
+  const textureTypes = [
     gl.TEXTURE,
     gl.TEXTURE_2D,
     gl.TEXTURE_CUBE_MAP,
     gl.TEXTURE_BINDING_2D,
     gl.TEXTURE_BINDING_CUBE_MAP,
   ];
-  if (
-    textureTypes.some(function (v) {
+  const isNeedSaveTexture = textureTypes.some(function (v) {
       return nvariables.indexOf(v) >= 0;
-    })
+    });
+
+    var numTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+  if (
+    )
   ) {
     //Generate code for saving texture state
-    var numTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
     ctorBody.push('this.textures=[];');
 
     //Generate save state for textures
@@ -345,6 +354,27 @@ function createGLStateStack(gl, variables) {
     '};',
     'return new StateStack(gl);',
   ].join('');
-  var proc = new Function('gl', code);
-  return proc(gl);
+
+  return {
+    push() {
+      let stack: GlStack = {
+        restoreActive: false
+      };
+      if (isNeedSaveTexture) {
+        stack.restoreActive = true;
+        stack.curTex = gl.getParameter(gl.ACTIVE_TEXTURE);
+        stack.texState = range(0, numTextures).map(n => {
+          gl.activeTexture(gl.TEXTURE0 + n);
+          return [
+            gl.getParameter(gl.TEXTURE_BINDING_2D),
+            gl.getParameter(gl.TEXTURE_BINDING_CUBE_MAP)
+          ]
+        });
+        gl.activeTexture(stack.curTex);
+      }
+    },
+    pop() {
+
+    }
+  };
 }
