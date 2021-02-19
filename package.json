@@ -2,7 +2,7 @@
   "name": "gl-state",
   "version": "1.0.0",
   "description": "Saves WebGL context state",
-  "main": "savestate.js",
+  "main": "dist/gl-state.js",
   "directories": {
     "example": "example"
   },
