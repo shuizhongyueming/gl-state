@@ -105,7 +105,7 @@ export function createGLStateStack(gl: WebGLRenderingContext, variables?: number
           case gl.ACTIVE_TEXTURE:
             return gl.activeTexture(sv as number);
           case gl.ARRAY_BUFFER_BINDING:
-            return gl.bindBuffer(gl.ARRAY_BUFFER, sv as number);
+            return gl.bindBuffer(gl.ARRAY_BUFFER, sv as WebGLBuffer);
           case gl.BLEND_COLOR:
             // @ts-ignore
             return gl.blendColor(...sv);
